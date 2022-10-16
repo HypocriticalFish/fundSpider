@@ -1,5 +1,6 @@
 # Statements
-    This spider is used to crawl the data of investment strategy from the applet investment manager in the Tiantian Fund app of Dongfang Wealth. If no proxy is configured, frequent crawling may result in IP blocking
+This spider is used to crawl the data of investment strategy from the applet investment manager in the Tiantian Fund app of Dongfang Wealth. 
+If no proxy is configured, frequent crawling may result in IP blocking.
 
 
 
@@ -45,6 +46,8 @@ windows 10
 # Instruction
 
 ```
-To run the spider, double click 'start.bat'. The crawled data is saved in the folder 'fundData' under the project root directory. Log files could be found in the folder 'log'.
+To run the spider, double click 'start.bat'. 
+The crawled data is saved in the folder 'fundData' under the project root directory.
+Log files could be found in the folder 'log'.
 ```
 
