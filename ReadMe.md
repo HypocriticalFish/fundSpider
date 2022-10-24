@@ -1,5 +1,6 @@
 # Statements
 This spider is used to crawl the data of investment strategy from the applet investment manager in the Tiantian Fund app of Dongfang Wealth. 
+
 If no proxy is configured, frequent crawling may result in IP blocking.
 
 
