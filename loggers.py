@@ -50,7 +50,7 @@ def get_logger(isfile=False):
             os.mkdir(log_path)
         logfile = log_path + '/' + time_line + '.txt'
         # 设置文件日志格式
-        logger.info(logfile)
+        # logger.info(logfile)
         filer = logging.FileHandler(logfile, mode='w')  # 输出到log文件的handler
         # filer.setLevel(level=logging.DEBUG)
         file_formatter = logging.Formatter(

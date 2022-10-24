@@ -4,8 +4,27 @@
 #   @Description    工具方法
 
 
-import datetime
-import os
+import configparser
+import pymysql
+
+
+# 读取配置文件获取数据库连接
+def get_db_connection(host, port, user, password):
+    config = configparser.ConfigParser()
+    config.read('Default_DB_Config.ini')
+    if host == '#':
+        host = config.get('mysql-database', 'HOST')
+    if port == '#':
+        port = int(config.get('mysql-database', 'PORT'))
+    if user == '#':
+        user = config.get('mysql-database', 'USER')
+    if password == '#':
+        password = config.get('mysql-database', 'PASSWORD')
+    charset = config.get('mysql-database', 'CHARSET')
+
+    conn = pymysql.connect(host=host, user=user, password=password, port=port, charset=charset, database='mysql')
+
+    return conn
 
 
 # 根据指定Host和Referer构造请求头
@@ -26,21 +45,3 @@ def get_headers(host, referer, content_type):
     else:
         headers['content-type'] = 'application/json'
     return headers
-
-
-# 获取格式化后的当前时间戳字符串，例如20221016014826
-def get_timestamp():
-    timestamp = str(datetime.datetime.now()).replace('-', '').replace(':', '').replace(' ', '')
-    index = timestamp.rfind('.')
-    timestamp = timestamp[:index]
-    return timestamp
-
-
-# 递归删除指定文件夹下的所有文件
-def del_file(path_data):
-    for i in os.listdir(path_data):
-        file_data = path_data + "\\" + i
-        if os.path.isfile(file_data):
-            os.remove(file_data)
-        else:
-            del_file(file_data)

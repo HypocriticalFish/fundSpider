@@ -2,29 +2,26 @@
 
 
 echo.
-@echo 【爬取模式说明：】
+@echo 【请输入数据库配置信息，默认为ip为localhost(127.0.0.1)，默认端口为3306，默认字符集为'utf8'】
+@echo 【输入 # 代表使用Default_DB_Config.ini中的默认配置】
 
 
 @echo off
 @echo off
-@echo 【basic】：仅爬取投顾产品基本数据，不包含持仓信息、调仓信息以及每日涨幅信息；
-@echo 【detial】：仅爬取投顾产品持仓信息、调仓信息以及每日涨幅信息，不包括基本数据；
-@echo 【all】：爬取投顾产品全部信息，默认模式
 
 
-@echo off
-
-@echo off
-
-set /p mode=请输入爬取模式:
+set /p host=请输入数据库ip:
+set /p port=请输入端口号:
+set /p user=请输入用户名:
+set /p password=请输入密码:
 
 
 call .\venv\Scripts\activate.bat
 @echo 已激活虚拟环境，开始运行爬虫...
 
-python fundSpider.py %mode%
+python fundSpider.py %host% %port% %user% %password%
 
 
-@echo 爬取结果保存在项目目录下的fundData文件夹下，日志文件保存在log目录下。
+@echo 爬取结果保存数据库tt_fund下，日志文件保存在log目录下。
 
 pause
