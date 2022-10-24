@@ -22,6 +22,6 @@ call .\venv\Scripts\activate.bat
 python fundSpider.py %host% %port% %user% %password%
 
 
-@echo 爬取结果保存数据库tt_fund下，日志文件保存在log目录下。
+@echo 爬取的数据保存在tt_fund数据库中，表结构以及字段含义请查看ReadMe文档，日志请查看log文件夹。
 
 pause
