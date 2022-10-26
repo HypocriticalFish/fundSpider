@@ -92,7 +92,7 @@ CREATE TABLE `base_info` (
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`update_date`,`strategy_id`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=256 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 
 
 # 区间收益表
@@ -121,7 +121,7 @@ CREATE TABLE `interval_profit` (
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`update_date`,`strategy_id`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=256 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 
 
 # 持仓信息表
@@ -136,7 +136,7 @@ CREATE TABLE `hold_warehouse_info` (
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1409 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 
 
 # 调仓历史记录表（每次爬取前均会清空以实现覆盖写入）
@@ -148,7 +148,7 @@ CREATE TABLE `adjust_warehouse_history` (
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`update_date`,`strategy_id`,`date_`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1125 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 
 
 # 调仓明细变动表（每次爬取前均会清空以实现覆盖写入）
@@ -164,7 +164,7 @@ CREATE TABLE `adjust_warehouse_detail` (
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`update_date`,`strategy_id`,`date_`,`fund_code`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=17646 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 
 
 # 备选基金表
@@ -177,7 +177,7 @@ CREATE TABLE `strategy_pool` (
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=142284 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 
 
 # 日收益率表（每次爬取前均会清空以实现覆盖写入）
@@ -189,6 +189,6 @@ CREATE TABLE `day_profit` (
   `BENCH_SE` float DEFAULT NULL COMMENT '基准涨跌幅',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`update_date`,`strategy_id`,`date_`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=82897 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 ```
 
