@@ -188,7 +188,7 @@ CREATE TABLE `day_profit` (
   `SE` float DEFAULT NULL COMMENT '组合涨跌幅',
   `BENCH_SE` float DEFAULT NULL COMMENT '基准涨跌幅',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`update_date`,`strategy_id`,`date`) '主键'
+  PRIMARY KEY (`update_date`,`strategy_id`,`date_`) '主键'
 ) ENGINE=InnoDB AUTO_INCREMENT=82897 DEFAULT CHARSET=utf8mb3;
 ```
 
