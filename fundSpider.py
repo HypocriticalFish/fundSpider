@@ -166,54 +166,56 @@ def init_db():
 
     # 创建基本信息表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS base_info (id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),company_name VARCHAR(20),brand VARCHAR(20),strategy_name VARCHAR(20),class VARCHAR(10),create_date DATE,risk_level INT,basic_remark VARCHAR(200),recommend_hold VARCHAR(10),feature VARCHAR(500),concept VARCHAR(500),min_buy FLOAT,service_rate FLOAT,transfer_in_rate FLOAT, update_time DATETIME DEFAULT NOW())"
+        "CREATE TABLE IF NOT EXISTS base_info (strategy_id VARCHAR(10),company_name VARCHAR(20),brand VARCHAR(20),strategy_name VARCHAR(20),class VARCHAR(10),create_date DATE,risk_level INT,basic_remark VARCHAR(200),recommend_hold VARCHAR(10),feature VARCHAR(500),concept VARCHAR(500),min_buy FLOAT,service_rate FLOAT,strategy_rate_discount FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`))"
     )
 
     # 创建日收益表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS day_profit(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,SE FLOAT,BENCH_SE FLOAT)"
-    )
-    # 清空日收益表，实现覆盖写入
-    cursor.execute(
-        "TRUNCATE TABLE day_profit"
+        "CREATE TABLE IF NOT EXISTS day_profit(strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,SE FLOAT,BENCH_SE FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`date_`))"
     )
 
     # 创建区间收益表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS interval_profit(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),last_date DATE,week_profit FLOAT,week_bench FLOAT,month_profit FLOAT,month_bench FLOAT,thrmonth_profit FLOAT,thrmonth_bench FLOAT,halfyear_profit FLOAT,halfyear_bench FLOAT,year_profit FLOAT,year_bench FLOAT,twoyear_pforit FLOAT,twoyear_bench FLOAT,thryear_profit FLOAT,thryear_bench FLOAT,curyear_profit FLOAT,curyear_bench FLOAT,total_profit FLOAT,total_bench FLOAT,update_time DATETIME DEFAULT NOW())"
+        "CREATE TABLE IF NOT EXISTS interval_profit(strategy_id VARCHAR(10),strategy_name VARCHAR(20),last_date DATE,week_profit FLOAT,week_bench FLOAT,month_profit FLOAT,month_bench FLOAT,thrmonth_profit FLOAT,thrmonth_bench FLOAT,halfyear_profit FLOAT,halfyear_bench FLOAT,year_profit FLOAT,year_bench FLOAT,twoyear_pforit FLOAT,twoyear_bench FLOAT,thryear_profit FLOAT,thryear_bench FLOAT,curyear_profit FLOAT,curyear_bench FLOAT,total_profit FLOAT,total_bench FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`))"
     )
 
     # 创建持仓分布表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS hold_warehouse_info(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),ratio FLOAT,update_time DATETIME DEFAULT NOW())"
+        "CREATE TABLE IF NOT EXISTS hold_warehouse_info(strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),ratio FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`))"
     )
 
     # 创建调仓记录表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS adjust_warehouse_history(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,reason VARCHAR(1000))"
-    )
-    # 清空调仓记录表，实现覆盖写入
-    cursor.execute(
-        "TRUNCATE TABLE adjust_warehouse_history"
+        "CREATE TABLE IF NOT EXISTS adjust_warehouse_history(strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,reason VARCHAR(1000),update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`date_`))"
     )
 
     # 创建调仓详情表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS adjust_warehouse_detail(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),pre_ratio FLOAT,after_ratio FLOAT)"
-    )
-    # 清空调仓详情表，实现覆盖写入
-    cursor.execute(
-        "TRUNCATE TABLE adjust_warehouse_detail"
+        "CREATE TABLE IF NOT EXISTS adjust_warehouse_detail(strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),pre_ratio FLOAT,after_ratio FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`date_`,`fund_code`))"
     )
 
     # 创建备选基金表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS strategy_pool(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),update_time DATETIME DEFAULT NOW())"
+        "CREATE TABLE IF NOT EXISTS strategy_pool(strategy_id VARCHAR(10),strategy_name VARCHAR(20),fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`))"
     )
+
+
+# 清理当天数据，避免违背主键唯一性约束
+def clear_today_db():
+    update_date = datetime.datetime.now().date()
+    cursor.execute("DELETE FROM `base_info` WHERE update_date = %s", (update_date,))
+    cursor.execute("DELETE FROM `interval_profit` WHERE update_date = %s", update_date)
+    cursor.execute("DELETE FROM `hold_warehouse_info` WHERE update_date = %s", update_date)
+    cursor.execute("DELETE FROM `adjust_warehouse_history` WHERE update_date = %s", update_date)
+    cursor.execute("DELETE FROM `adjust_warehouse_detail` WHERE update_date = %s", update_date)
+    cursor.execute("DELETE FROM `strategy_pool` WHERE update_date = %s", update_date)
+    cursor.execute("DELETE FROM `day_profit` WHERE update_date = %s", update_date)
+    log.info("当日数据清理完毕")
 
 
 # 组装投顾策略的基本信息，并添加到列表中
 def get_all_info(strategy_id, base_item):
+    update_date = datetime.datetime.now().date()
     partner_id = base_item['partnerId']
     # 获取详细信息
     detail_info = get_strategy_info(partner_id, base_item['companyId'], strategy_id)
@@ -253,8 +255,9 @@ def get_all_info(strategy_id, base_item):
         extend_info.get('resume', ''),
         brand_info['STGCONCEPT'],
         float(brand_info['MINBUY']),
+        float(brand_info['STRATEGY_RATE']),
         float(brand_info['STRATEGY_RATE_DISCOUNT']),
-        float(brand_info['STRATEGY_RATE'])
+        update_date
     )
 
     basic_item_list.append(base_info_values)
@@ -305,6 +308,7 @@ def get_all_info(strategy_id, base_item):
         None if thisyear_bench == '' else float(thisyear_bench),
         None if total_profit == '' else float(total_profit),
         None if total_bench == '' else float(total_bench),
+        update_date
     )
     interval_profit_list.append(interval_profit_values)
     log.info('\t' + brand_info['TGNAME'] + '区间收益信息爬取成功')
@@ -334,7 +338,8 @@ def get_all_info(strategy_id, base_item):
                     fund.get("fundCode", None),
                     fund.get("fundName", None),
                     fund_type,
-                    float(fund['ratio']) / 100
+                    float(fund['ratio']) / 100,
+                    update_date
                 )
                 hold_warehouse_list.append(hold_warehouse_values)
         log.info('\t' + brand_info['TGNAME'] + '持仓分布信息爬取成功')
@@ -347,7 +352,8 @@ def get_all_info(strategy_id, base_item):
             strategy_id,
             brand_info['TGNAME'],
             adjust_date,
-            adjust_history['reason']
+            adjust_history['reason'],
+            update_date
         )
         adjust_warehouse_list.append(adjust_info)
         for adjust_detail in adjust_history['adjustList']:
@@ -366,6 +372,7 @@ def get_all_info(strategy_id, base_item):
                     fund_type,
                     float(detail['preRatio']) / 100,
                     float(detail['afterRatio']) / 100,
+                    update_date
                 )
                 adjust_detail_list.append(adjust_detail_values)
     log.info('\t' + brand_info['TGNAME'] + '调仓历史信息爬取成功')
@@ -382,11 +389,12 @@ def get_all_info(strategy_id, base_item):
                 brand_info['TGNAME'],
                 fund['FCODE'],
                 fund['FNAME'],
-                fund['FTYPENAME']
+                fund['FTYPENAME'],
+                update_date
             )
             fund_info_list.append(fund_info_values)
         connection.cursor().executemany(
-            "INSERT INTO `strategy_pool`(strategy_id,strategy_name,fund_code,fund_name,fund_type) value(%s,%s,%s,%s,%s)",
+            "INSERT INTO `strategy_pool`(strategy_id,strategy_name,fund_code,fund_name,fund_type,update_date) value(%s,%s,%s,%s,%s,%s)",
             fund_info_list)
         connection.commit()
         log.info('\t' + brand_info['TGNAME'] + '备选基金信息入库成功')
@@ -402,10 +410,11 @@ def get_all_info(strategy_id, base_item):
             brand_info['TGNAME'],
             date,
             float(profit['SE']) / 100,
-            float(profit['BENCH_SE']) / 100
+            float(profit['BENCH_SE']) / 100,
+            update_date
         ))
     connection.cursor().executemany(
-        "INSERT INTO `day_profit`(strategy_id,strategy_name,date_,SE,BENCH_SE) value (%s,%s,%s,%s,%s)",
+        "INSERT INTO `day_profit`(strategy_id,strategy_name,date_,SE,BENCH_SE,update_date) value (%s,%s,%s,%s,%s,%s)",
         day_profit_list)
     connection.commit()
     log.info('\t' + brand_info['TGNAME'] + '日收益信息入库成功\n')
@@ -414,19 +423,19 @@ def get_all_info(strategy_id, base_item):
 # 记录入库
 def save_to_db():
     cursor.executemany(
-        "INSERT INTO `base_info`(strategy_id,company_name,brand,strategy_name,class,create_date,risk_level,basic_remark,recommend_hold,feature,concept,min_buy,service_rate,transfer_in_rate) value (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        "INSERT INTO `base_info`(strategy_id,company_name,brand,strategy_name,class,create_date,risk_level,basic_remark,recommend_hold,feature,concept,min_buy,service_rate,strategy_rate_discount,update_date) value (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         basic_item_list)
     cursor.executemany(
-        "INSERT INTO `interval_profit`(strategy_id,strategy_name ,last_date,week_profit,week_bench,month_profit,month_bench,thrmonth_profit,thrmonth_bench,halfyear_profit,halfyear_bench,year_profit,year_bench,twoyear_pforit,twoyear_bench,thryear_profit,thryear_bench,curyear_profit,curyear_bench,total_profit,total_bench) value (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        "INSERT INTO `interval_profit`(strategy_id,strategy_name ,last_date,week_profit,week_bench,month_profit,month_bench,thrmonth_profit,thrmonth_bench,halfyear_profit,halfyear_bench,year_profit,year_bench,twoyear_pforit,twoyear_bench,thryear_profit,thryear_bench,curyear_profit,curyear_bench,total_profit,total_bench,update_date) value (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         interval_profit_list)
     cursor.executemany(
-        "INSERT INTO `hold_warehouse_info`(strategy_id,strategy_name,date_,fund_code,fund_name,fund_type,ratio) value (%s,%s,%s,%s,%s,%s,%s)",
+        "INSERT INTO `hold_warehouse_info`(strategy_id,strategy_name,date_,fund_code,fund_name,fund_type,ratio,update_date) value (%s,%s,%s,%s,%s,%s,%s,%s)",
         hold_warehouse_list)
     cursor.executemany(
-        "INSERT INTO `adjust_warehouse_history`(strategy_id,strategy_name,date_,reason) value (%s,%s,%s,%s)",
+        "INSERT INTO `adjust_warehouse_history`(strategy_id,strategy_name,date_,reason,update_date) value (%s,%s,%s,%s,%s)",
         adjust_warehouse_list)
     cursor.executemany(
-        "INSERT INTO `adjust_warehouse_detail`(strategy_id, strategy_name, date_, fund_code, fund_name, fund_type, pre_ratio, after_ratio) value (%s,%s,%s,%s,%s,%s,%s,%s) ",
+        "INSERT INTO `adjust_warehouse_detail`(strategy_id, strategy_name, date_, fund_code, fund_name, fund_type, pre_ratio, after_ratio,update_date) value (%s,%s,%s,%s,%s,%s,%s,%s,%s) ",
         adjust_detail_list)
     connection.commit()
     log.info("爬取的数据入库成功！")
@@ -457,6 +466,9 @@ if __name__ == '__main__':
 
     # 初始化数据库
     init_db()
+    # 删除当日爬取的记录
+    clear_today_db()
+    connection.commit()
     log.info("【数据库初始化完成，开始爬取投顾策略信息】")
 
     # 统计基本数据缺失的投顾策略

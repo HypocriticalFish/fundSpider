@@ -75,7 +75,6 @@ Log files could be found in the folder 'log'.
 ```mysql
 # 投顾策略基本信息表
 CREATE TABLE `base_info` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `company_name` varchar(20) DEFAULT NULL COMMENT '公司名称',
   `brand` varchar(20) DEFAULT NULL COMMENT '投顾品牌',
@@ -88,16 +87,16 @@ CREATE TABLE `base_info` (
   `feature` varchar(500) DEFAULT NULL COMMENT '特点',
   `concept` varchar(500) DEFAULT NULL COMMENT '策略理念',
   `min_buy` float DEFAULT NULL COMMENT '起投金额，单位元',
-  `service_rate` float DEFAULT NULL COMMENT '服务费率，单位折',
-  `transfer_in_rate` float DEFAULT NULL COMMENT '转服费率',
+  `service_rate` float DEFAULT NULL COMMENT '服务费率',
+  `strategy_rate_discount` float DEFAULT NULL COMMENT '产品申购费率折扣',
+  `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`update_date`,`strategy_id`) '主键'
 ) ENGINE=InnoDB AUTO_INCREMENT=256 DEFAULT CHARSET=utf8mb3;
 
 
 # 区间收益表
 CREATE TABLE `interval_profit` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `last_date` date DEFAULT NULL COMMENT '最新净值日',
@@ -119,14 +118,14 @@ CREATE TABLE `interval_profit` (
   `curyear_bench` float DEFAULT NULL COMMENT '今年基准涨跌幅',
   `total_profit` float DEFAULT NULL COMMENT '成立以来涨跌幅',
   `total_bench` float DEFAULT NULL COMMENT '成立以来基准涨跌幅',
+  `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`update_date`,`strategy_id`) '主键'
 ) ENGINE=InnoDB AUTO_INCREMENT=256 DEFAULT CHARSET=utf8mb3;
 
 
 # 持仓信息表
 CREATE TABLE `hold_warehouse_info` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '日期',
@@ -134,25 +133,26 @@ CREATE TABLE `hold_warehouse_info` (
   `fund_name` varchar(30) DEFAULT NULL COMMENT '基金名称',
   `fund_type` varchar(10) DEFAULT NULL COMMENT '基金类型',
   `ratio` float DEFAULT NULL COMMENT '持仓比例',
+  `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`) '主键'
 ) ENGINE=InnoDB AUTO_INCREMENT=1409 DEFAULT CHARSET=utf8mb3;
 
 
 # 调仓历史记录表（每次爬取前均会清空以实现覆盖写入）
 CREATE TABLE `adjust_warehouse_history` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '调仓日期',
   `reason` varchar(1000) DEFAULT NULL COMMENT '调仓原因',
-  PRIMARY KEY (`id`)
+  `update_date` date NOT NULL COMMENT '日期',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
+  PRIMARY KEY (`update_date`,`strategy_id`,`date_`) '主键'
 ) ENGINE=InnoDB AUTO_INCREMENT=1125 DEFAULT CHARSET=utf8mb3;
 
 
 # 调仓明细变动表（每次爬取前均会清空以实现覆盖写入）
 CREATE TABLE `adjust_warehouse_detail` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾测策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '调仓日期',
@@ -161,32 +161,34 @@ CREATE TABLE `adjust_warehouse_detail` (
   `fund_type` varchar(10) DEFAULT NULL COMMENT '基金类型',
   `pre_ratio` float DEFAULT NULL COMMENT '调仓前持仓占比',
   `after_ratio` float DEFAULT NULL COMMENT '调仓后持仓占比',
-  PRIMARY KEY (`id`)
+  `update_date` date NOT NULL COMMENT '日期',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
+  PRIMARY KEY (`update_date`,`strategy_id`,`date_`,`fund_code`) '主键'
 ) ENGINE=InnoDB AUTO_INCREMENT=17646 DEFAULT CHARSET=utf8mb3;
 
 
 # 备选基金表
 CREATE TABLE `strategy_pool` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `fund_code` varchar(10) DEFAULT NULL COMMENT '基金代码',
   `fund_name` varchar(30) DEFAULT NULL COMMENT '基金名称',
   `fund_type` varchar(10) DEFAULT NULL COMMENT '基金类型',
+  `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`) '主键'
 ) ENGINE=InnoDB AUTO_INCREMENT=142284 DEFAULT CHARSET=utf8mb3;
 
 
 # 日收益率表（每次爬取前均会清空以实现覆盖写入）
 CREATE TABLE `day_profit` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '日期',
   `SE` float DEFAULT NULL COMMENT '组合涨跌幅',
   `BENCH_SE` float DEFAULT NULL COMMENT '基准涨跌幅',
-  PRIMARY KEY (`id`)
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
+  PRIMARY KEY (`update_date`,`strategy_id`,`date`) '主键'
 ) ENGINE=InnoDB AUTO_INCREMENT=82897 DEFAULT CHARSET=utf8mb3;
 ```
 
