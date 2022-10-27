@@ -5,23 +5,19 @@
 
 
 import configparser
-import datetime
 
 import pymysql
 
 
 # 读取配置文件获取数据库连接
-def get_db_connection(host, port, user, password):
+def get_db_connection():
     config = configparser.ConfigParser()
     config.read('Default_DB_Config.ini')
-    if host == '#':
-        host = config.get('mysql-database', 'HOST')
-    if port == '#':
-        port = int(config.get('mysql-database', 'PORT'))
-    if user == '#':
-        user = config.get('mysql-database', 'USER')
-    if password == '#':
-        password = config.get('mysql-database', 'PASSWORD')
+
+    host = config.get('mysql-database', 'HOST')
+    port = int(config.get('mysql-database', 'PORT'))
+    user = config.get('mysql-database', 'USER')
+    password = config.get('mysql-database', 'PASSWORD')
     charset = config.get('mysql-database', 'CHARSET')
 
     conn = pymysql.connect(host=host, user=user, password=password, port=port, charset=charset, database='mysql')

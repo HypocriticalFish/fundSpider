@@ -9,19 +9,21 @@ If no proxy is configured, frequent crawling may result in IP blocking.
 
 python 3.10.7+
 
-windows 10
+mysql 5.7.40
 
 
 
 
 # Directory structure
     │  Default_DB_Config.ini    // default database config
+    │  Dockerfile               //docker file
     │  fundSpider.py			// core spider file
     │  init.bat					// initialize environment
     │  loggers.py				// log moduler
     │  ReadMe.md				// english documentation
     │  requirements.txt			// dependent packages
-    │  start.bat				// start spider
+    │  start.bat				// start spider on windows
+    │  start.sh				// start spider on Linux
     |  utils.py					// utils methods
     │  使用说明.txt				 // chinese documentation
     │  
@@ -45,7 +47,7 @@ windows 10
 # Instruction
 
 ```
-To run the spider, double click 'start.bat' and input the database configuration. 
+To run the spider on windows, double click 'start.bat'.
 The crawled data is saved into the database 'tt_fund'.
 Log files could be found in the folder 'log'.
 ```
@@ -75,6 +77,7 @@ Log files could be found in the folder 'log'.
 ```mysql
 # 投顾策略基本信息表
 CREATE TABLE `base_info` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `company_name` varchar(20) DEFAULT NULL COMMENT '公司名称',
   `brand` varchar(20) DEFAULT NULL COMMENT '投顾品牌',
@@ -91,12 +94,14 @@ CREATE TABLE `base_info` (
   `strategy_rate_discount` float DEFAULT NULL COMMENT '产品申购费率折扣',
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`update_date`,`strategy_id`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
+  PRIMARY KEY (`id`),
+  KEY `index_udate_id` (`update_date`,`strategy_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 # 区间收益表
 CREATE TABLE `interval_profit` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `last_date` date DEFAULT NULL COMMENT '最新净值日',
@@ -120,12 +125,13 @@ CREATE TABLE `interval_profit` (
   `total_bench` float DEFAULT NULL COMMENT '成立以来基准涨跌幅',
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`update_date`,`strategy_id`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
-
+  PRIMARY KEY (`id`),
+  KEY `index_udate_id` (`update_date`,`strategy_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 # 持仓信息表
 CREATE TABLE `hold_warehouse_info` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '日期',
@@ -135,24 +141,28 @@ CREATE TABLE `hold_warehouse_info` (
   `ratio` float DEFAULT NULL COMMENT '持仓比例',
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
+  PRIMARY KEY (`id`),
+  KEY `index_udate_id_fcode` (`update_date`,`strategy_id`,`fund_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-# 调仓历史记录表（每次爬取前均会清空以实现覆盖写入）
+# 调仓历史记录表
 CREATE TABLE `adjust_warehouse_history` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '调仓日期',
   `reason` varchar(1000) DEFAULT NULL COMMENT '调仓原因',
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`update_date`,`strategy_id`,`date_`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
+  PRIMARY KEY (`id`),
+  KEY `index_udate_id_date` (`update_date`,`strategy_id`,`date_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-# 调仓明细变动表（每次爬取前均会清空以实现覆盖写入）
+# 调仓明细变动表
 CREATE TABLE `adjust_warehouse_detail` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾测策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '调仓日期',
@@ -163,12 +173,14 @@ CREATE TABLE `adjust_warehouse_detail` (
   `after_ratio` float DEFAULT NULL COMMENT '调仓后持仓占比',
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`update_date`,`strategy_id`,`date_`,`fund_code`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
+  PRIMARY KEY (`id`),
+  KEY `index_udate_id_date_fcode` (`update_date`,`strategy_id`,`date_`,`fund_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 # 备选基金表
 CREATE TABLE `strategy_pool` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `fund_code` varchar(10) DEFAULT NULL COMMENT '基金代码',
@@ -176,19 +188,22 @@ CREATE TABLE `strategy_pool` (
   `fund_type` varchar(10) DEFAULT NULL COMMENT '基金类型',
   `update_date` date NOT NULL COMMENT '日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
+  PRIMARY KEY (`id`),
+  KEY `index_udate_id_fcode` (`update_date`,`strategy_id`,`fund_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-# 日收益率表（每次爬取前均会清空以实现覆盖写入）
+# 日收益率表
 CREATE TABLE `day_profit` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '日期',
   `SE` float DEFAULT NULL COMMENT '组合涨跌幅',
   `BENCH_SE` float DEFAULT NULL COMMENT '基准涨跌幅',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
-  PRIMARY KEY (`update_date`,`strategy_id`,`date_`) '主键'
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
+  PRIMARY KEY (`id`),
+  KEY `index_udate_id_date` (`update_date`,`strategy_id`,`date_`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
 

@@ -3,7 +3,7 @@
 #   @Create 2022/10/15 21:51
 #   @Description    爬取天天基金投顾产品的数据
 import datetime
-import sys
+import traceback
 
 import requests
 import time
@@ -166,37 +166,37 @@ def init_db():
 
     # 创建基本信息表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS base_info (strategy_id VARCHAR(10),company_name VARCHAR(20),brand VARCHAR(20),strategy_name VARCHAR(20),class VARCHAR(10),create_date DATE,risk_level INT,basic_remark VARCHAR(200),recommend_hold VARCHAR(10),feature VARCHAR(500),concept VARCHAR(500),min_buy FLOAT,service_rate FLOAT,strategy_rate_discount FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`))"
+        "CREATE TABLE IF NOT EXISTS base_info (id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),company_name VARCHAR(20),brand VARCHAR(20),strategy_name VARCHAR(20),class VARCHAR(10),create_date DATE,risk_level INT,basic_remark VARCHAR(200),recommend_hold VARCHAR(10),feature VARCHAR(500),concept VARCHAR(500),min_buy FLOAT,service_rate FLOAT,strategy_rate_discount FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id`(`update_date`,`strategy_id`))"
     )
 
     # 创建日收益表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS day_profit(strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,SE FLOAT,BENCH_SE FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`date_`))"
+        "CREATE TABLE IF NOT EXISTS day_profit(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,SE FLOAT,BENCH_SE FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id_date`(`update_date`,`strategy_id`,`date_`))"
     )
 
     # 创建区间收益表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS interval_profit(strategy_id VARCHAR(10),strategy_name VARCHAR(20),last_date DATE,week_profit FLOAT,week_bench FLOAT,month_profit FLOAT,month_bench FLOAT,thrmonth_profit FLOAT,thrmonth_bench FLOAT,halfyear_profit FLOAT,halfyear_bench FLOAT,year_profit FLOAT,year_bench FLOAT,twoyear_pforit FLOAT,twoyear_bench FLOAT,thryear_profit FLOAT,thryear_bench FLOAT,curyear_profit FLOAT,curyear_bench FLOAT,total_profit FLOAT,total_bench FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`))"
+        "CREATE TABLE IF NOT EXISTS interval_profit(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),last_date DATE,week_profit FLOAT,week_bench FLOAT,month_profit FLOAT,month_bench FLOAT,thrmonth_profit FLOAT,thrmonth_bench FLOAT,halfyear_profit FLOAT,halfyear_bench FLOAT,year_profit FLOAT,year_bench FLOAT,twoyear_pforit FLOAT,twoyear_bench FLOAT,thryear_profit FLOAT,thryear_bench FLOAT,curyear_profit FLOAT,curyear_bench FLOAT,total_profit FLOAT,total_bench FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id`(`update_date`,`strategy_id`))"
     )
 
     # 创建持仓分布表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS hold_warehouse_info(strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),ratio FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`))"
+        "CREATE TABLE IF NOT EXISTS hold_warehouse_info(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),ratio FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id_fcode`(`update_date`,`strategy_id`,`fund_code`))"
     )
 
     # 创建调仓记录表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS adjust_warehouse_history(strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,reason VARCHAR(1000),update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`date_`))"
+        "CREATE TABLE IF NOT EXISTS adjust_warehouse_history(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,reason VARCHAR(1000),update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id_date`(`update_date`,`strategy_id`,`date_`))"
     )
 
     # 创建调仓详情表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS adjust_warehouse_detail(strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),pre_ratio FLOAT,after_ratio FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`date_`,`fund_code`))"
+        "CREATE TABLE IF NOT EXISTS adjust_warehouse_detail(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),pre_ratio FLOAT,after_ratio FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id_date_fcode`(`update_date`,`strategy_id`,`date_`,`fund_code`))"
     )
 
     # 创建备选基金表
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS strategy_pool(strategy_id VARCHAR(10),strategy_name VARCHAR(20),fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),update_date DATE,update_time DATETIME DEFAULT NOW(),PRIMARY KEY (`update_date`,`strategy_id`,`fund_code`))"
+        "CREATE TABLE IF NOT EXISTS strategy_pool(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id_fcode`(`update_date`,`strategy_id`,`fund_code`))"
     )
 
 
@@ -235,189 +235,198 @@ def get_all_info(strategy_id, base_item):
     # 获取备选基金信息
     strategy_pool_info = getStrategyPool(partner_id, strategy_id)
 
-    # 推荐持有
-    recommend_hold_time = detail_info['baseData']['data'].get('recommendHoldTime', '')
+    try:
+        # 推荐持有
+        recommend_hold_time = detail_info['baseData']['data'].get('recommendHoldTime', '')
 
-    create_date = datetime.datetime.strptime(detail_info['targetProfitInfo']['data'][0]['ESTABDATE'],
-                                             '%Y-%m-%d %H:%M:%S').date()
+        create_date = datetime.datetime.strptime(detail_info['targetProfitInfo']['data'][0]['ESTABDATE'],
+                                                 '%Y-%m-%d %H:%M:%S').date()
 
-    # 基本信息入库
-    base_info_values = (
-        strategy_id,
-        base_item['companyName'],
-        base_item['brand'],
-        brand_info['TGNAME'],
-        extend_info.get('categoryName', ''),
-        create_date,
-        int(brand_info['RISKLEVEL']),
-        brand_info['BASIC_CAL_FORMULA_REMARK'],
-        recommend_hold_time,
-        extend_info.get('resume', ''),
-        brand_info['STGCONCEPT'],
-        float(brand_info['MINBUY']),
-        float(brand_info['STRATEGY_RATE']),
-        float(brand_info['STRATEGY_RATE_DISCOUNT']),
-        update_date
-    )
-
-    basic_item_list.append(base_info_values)
-    log.info('\t' + brand_info['TGNAME'] + '基本信息爬取成功')
-
-    # 收集区间收益信息：
-    # 最新净值日期
-    last_date = datetime.datetime.strptime(detail_info['targetProfitInfo']['data'][0]['SYRQ'], '%Y-%m-%d').date()
-
-    week_profit = brand_info.get('SYL_Z', None)
-    week_bench = brand_info.get('BENCHSYL_Z', None)
-    month_profit = brand_info.get('SYL_Y', None)
-    month_bench = brand_info.get('BENCHSYL_Y', None)
-    thrmonth_profit = brand_info.get('SYL_3Y', None)
-    thrmonth_bench = brand_info.get('BENCHSYL_3Y', None)
-    halfyear_profit = brand_info.get('SYL_6Y', None)
-    halfyear_bench = brand_info.get('BENCHSYL_6Y', None)
-    year_profit = brand_info.get('SYL_1N', None)
-    year_bench = brand_info.get('BENCHSYL_1N', None)
-    twoyear_profit = brand_info.get('SYL_2N', None)
-    twoyear_bench = brand_info.get('BENCHSYL_2N', None)
-    thryear_profit = brand_info.get('SYL_3N', None)
-    thryear_bench = brand_info.get('BENCHSYL_3N', None)
-    thisyear_profit = brand_info.get('SYL_JN', None)
-    thisyear_bench = brand_info.get('BENCHSYL_JN', None)
-    total_profit = brand_info.get('SYL_LN', None)
-    total_bench = brand_info.get('BENCHSYL_LN', None)
-
-    interval_profit_values = (
-        strategy_id,
-        brand_info['TGNAME'],
-        last_date,
-        None if week_profit == '' else float(week_profit),
-        None if week_bench == '' else float(week_bench),
-        None if month_profit == '' else float(month_profit),
-        None if month_bench == '' else float(month_bench),
-        None if thrmonth_profit == '' else float(thrmonth_profit),
-        None if thrmonth_bench == '' else float(thrmonth_bench),
-        None if halfyear_profit == '' else float(halfyear_profit),
-        None if halfyear_bench == '' else float(halfyear_bench),
-        None if year_profit == '' else float(year_profit),
-        None if year_bench == '' else float(year_bench),
-        None if twoyear_profit == '' else float(twoyear_profit),
-        None if twoyear_bench == '' else float(twoyear_bench),
-        None if thryear_profit == '' else float(thryear_profit),
-        None if thryear_bench == '' else float(thryear_bench),
-        None if thisyear_profit == '' else float(thisyear_profit),
-        None if thisyear_bench == '' else float(thisyear_bench),
-        None if total_profit == '' else float(total_profit),
-        None if total_bench == '' else float(total_bench),
-        update_date
-    )
-    interval_profit_list.append(interval_profit_values)
-    log.info('\t' + brand_info['TGNAME'] + '区间收益信息爬取成功')
-
-    # 持仓信息
-    hold_warehouse_info = detail_info['getHoldWarehouseInfo'].get('data', {})
-    # 持仓基金类型列表
-    fund_type_map = ("QDII", "股票型", "货币型", "混合型", "", "", "债券型", "", "指数型")
-    hold_type_list = hold_warehouse_info.get('holdTypeList', [])
-
-    # 收集持仓信息
-    if hold_type_list is None or len(hold_type_list) == 0:
-        log.warning(brand_info['TGNAME'] + '无持仓分布详细信息')
-    else:
-        date = datetime.datetime.strptime(hold_warehouse_info.get('date'), '%Y-%m-%d').date()
-        for holdType in hold_type_list:
-            for fund in holdType['fundsList']:
-                # 计算类型
-                t = fund['type']
-                if t == 'a':
-                    t = '0'
-                fund_type = fund_type_map[int(t)]
-                hold_warehouse_values = (
-                    strategy_id,
-                    brand_info['TGNAME'],
-                    date,
-                    fund.get("fundCode", None),
-                    fund.get("fundName", None),
-                    fund_type,
-                    float(fund['ratio']) / 100,
-                    update_date
-                )
-                hold_warehouse_list.append(hold_warehouse_values)
-        log.info('\t' + brand_info['TGNAME'] + '持仓分布信息爬取成功')
-
-    # 收集调仓历史及详细信息
-    adjust_history_list = detail_info['getAdjustWarehouse_1']['data']['adjustHistory']
-    for adjust_history in adjust_history_list:
-        adjust_date = datetime.datetime.strptime(adjust_history['dateStr'], '%Y-%m-%d').date(),
-        adjust_info = (
+        # 基本信息入库
+        base_info_values = (
             strategy_id,
+            base_item['companyName'],
+            base_item['brand'],
             brand_info['TGNAME'],
-            adjust_date,
-            adjust_history['reason'],
+            extend_info.get('categoryName', ''),
+            create_date,
+            int(brand_info['RISKLEVEL']),
+            brand_info['BASIC_CAL_FORMULA_REMARK'],
+            recommend_hold_time,
+            extend_info.get('resume', ''),
+            brand_info['STGCONCEPT'],
+            float(brand_info['MINBUY']),
+            float(brand_info['STRATEGY_RATE']),
+            float(brand_info['STRATEGY_RATE_DISCOUNT']),
             update_date
         )
-        adjust_warehouse_list.append(adjust_info)
-        for adjust_detail in adjust_history['adjustList']:
-            for detail in adjust_detail['fundList']:
-                # 计算类型
-                t = detail['type']
-                if t == 'a':
-                    t = '0'
-                fund_type = fund_type_map[int(t)]
-                adjust_detail_values = (
-                    strategy_id,
-                    brand_info['TGNAME'],
-                    adjust_date,
-                    detail['fundCode'],
-                    detail.get('fundName', ''),
-                    fund_type,
-                    float(detail['preRatio']) / 100,
-                    float(detail['afterRatio']) / 100,
-                    update_date
-                )
-                adjust_detail_list.append(adjust_detail_values)
-    log.info('\t' + brand_info['TGNAME'] + '调仓历史信息爬取成功')
 
-    # 备选基金信息入库
-    fund_list = strategy_pool_info['data']
-    fund_info_list = []
-    if fund_list is None:
-        log.warning(brand_info['TGNAME'] + '备选基金信息缺失')
-    else:
-        for fund in fund_list:
-            fund_info_values = (
-                strategy_id,
-                brand_info['TGNAME'],
-                fund['FCODE'],
-                fund['FNAME'],
-                fund['FTYPENAME'],
-                update_date
-            )
-            fund_info_list.append(fund_info_values)
-        connection.cursor().executemany(
-            "INSERT INTO `strategy_pool`(strategy_id,strategy_name,fund_code,fund_name,fund_type,update_date) value(%s,%s,%s,%s,%s,%s)",
-            fund_info_list)
-        connection.commit()
-        log.info('\t' + brand_info['TGNAME'] + '备选基金信息入库成功')
+        basic_item_list.append(base_info_values)
+        log.info('\t' + brand_info['TGNAME'] + '基本信息爬取成功')
 
-    # 日收益信息入库
-    day_profit_list = []
-    total_performance = detail_info['strategyProfitChart_ln'].get('data', {})
+        # 收集区间收益信息：
+        # 最新净值日期
+        last_date = datetime.datetime.strptime(detail_info['targetProfitInfo']['data'][0]['SYRQ'], '%Y-%m-%d').date()
 
-    for profit in total_performance:
-        date = datetime.datetime.strptime(profit['PDATE'], '%Y-%m-%d').date()
-        day_profit_list.append((
+        week_profit = brand_info.get('SYL_Z', None)
+        week_bench = brand_info.get('BENCHSYL_Z', None)
+        month_profit = brand_info.get('SYL_Y', None)
+        month_bench = brand_info.get('BENCHSYL_Y', None)
+        thrmonth_profit = brand_info.get('SYL_3Y', None)
+        thrmonth_bench = brand_info.get('BENCHSYL_3Y', None)
+        halfyear_profit = brand_info.get('SYL_6Y', None)
+        halfyear_bench = brand_info.get('BENCHSYL_6Y', None)
+        year_profit = brand_info.get('SYL_1N', None)
+        year_bench = brand_info.get('BENCHSYL_1N', None)
+        twoyear_profit = brand_info.get('SYL_2N', None)
+        twoyear_bench = brand_info.get('BENCHSYL_2N', None)
+        thryear_profit = brand_info.get('SYL_3N', None)
+        thryear_bench = brand_info.get('BENCHSYL_3N', None)
+        thisyear_profit = brand_info.get('SYL_JN', None)
+        thisyear_bench = brand_info.get('BENCHSYL_JN', None)
+        total_profit = brand_info.get('SYL_LN', None)
+        total_bench = brand_info.get('BENCHSYL_LN', None)
+
+        interval_profit_values = (
             strategy_id,
             brand_info['TGNAME'],
-            date,
-            float(profit['SE']) / 100,
-            float(profit['BENCH_SE']) / 100,
+            last_date,
+            None if week_profit == '' else float(week_profit),
+            None if week_bench == '' else float(week_bench),
+            None if month_profit == '' else float(month_profit),
+            None if month_bench == '' else float(month_bench),
+            None if thrmonth_profit == '' else float(thrmonth_profit),
+            None if thrmonth_bench == '' else float(thrmonth_bench),
+            None if halfyear_profit == '' else float(halfyear_profit),
+            None if halfyear_bench == '' else float(halfyear_bench),
+            None if year_profit == '' else float(year_profit),
+            None if year_bench == '' else float(year_bench),
+            None if twoyear_profit == '' else float(twoyear_profit),
+            None if twoyear_bench == '' else float(twoyear_bench),
+            None if thryear_profit == '' else float(thryear_profit),
+            None if thryear_bench == '' else float(thryear_bench),
+            None if thisyear_profit == '' else float(thisyear_profit),
+            None if thisyear_bench == '' else float(thisyear_bench),
+            None if total_profit == '' else float(total_profit),
+            None if total_bench == '' else float(total_bench),
             update_date
-        ))
-    connection.cursor().executemany(
-        "INSERT INTO `day_profit`(strategy_id,strategy_name,date_,SE,BENCH_SE,update_date) value (%s,%s,%s,%s,%s,%s)",
-        day_profit_list)
-    connection.commit()
-    log.info('\t' + brand_info['TGNAME'] + '日收益信息入库成功\n')
+        )
+        interval_profit_list.append(interval_profit_values)
+        log.info('\t' + brand_info['TGNAME'] + '区间收益信息爬取成功')
+
+        # 持仓信息
+        hold_warehouse_info = detail_info['getHoldWarehouseInfo'].get('data', {})
+        # 持仓基金类型列表
+        fund_type_map = ("QDII", "股票型", "货币型", "混合型", "", "", "债券型", "", "指数型")
+        hold_type_list = hold_warehouse_info.get('holdTypeList', [])
+
+        # 收集持仓信息
+        if hold_type_list is None or len(hold_type_list) == 0:
+            log.warning(brand_info['TGNAME'] + '无持仓分布详细信息')
+        else:
+            date = datetime.datetime.strptime(hold_warehouse_info.get('date'), '%Y-%m-%d').date()
+            for holdType in hold_type_list:
+                for fund in holdType['fundsList']:
+                    # 计算类型
+                    t = fund['type']
+                    if t == 'a':
+                        t = '0'
+                    fund_type = fund_type_map[int(t)]
+                    hold_warehouse_values = (
+                        strategy_id,
+                        brand_info['TGNAME'],
+                        date,
+                        fund.get("fundCode", None),
+                        fund.get("fundName", None),
+                        fund_type,
+                        float(fund['ratio']) / 100,
+                        update_date
+                    )
+                    hold_warehouse_list.append(hold_warehouse_values)
+            log.info('\t' + brand_info['TGNAME'] + '持仓分布信息爬取成功')
+
+        # 收集调仓历史及详细信息
+        adjust_history_list = detail_info['getAdjustWarehouse_1']['data']['adjustHistory']
+        for adjust_history in adjust_history_list:
+            adjust_date = datetime.datetime.strptime(adjust_history['dateStr'], '%Y-%m-%d').date(),
+            adjust_info = (
+                strategy_id,
+                brand_info['TGNAME'],
+                adjust_date,
+                adjust_history['reason'],
+                update_date
+            )
+            adjust_warehouse_list.append(adjust_info)
+            for adjust_detail in adjust_history['adjustList']:
+                for detail in adjust_detail['fundList']:
+                    # 计算类型
+                    t = detail['type']
+                    if t == 'a':
+                        t = '0'
+                    fund_type = fund_type_map[int(t)]
+                    adjust_detail_values = (
+                        strategy_id,
+                        brand_info['TGNAME'],
+                        adjust_date,
+                        detail['fundCode'],
+                        detail.get('fundName', ''),
+                        fund_type,
+                        float(detail['preRatio']) / 100,
+                        float(detail['afterRatio']) / 100,
+                        update_date
+                    )
+                    adjust_detail_list.append(adjust_detail_values)
+        log.info('\t' + brand_info['TGNAME'] + '调仓历史信息爬取成功')
+
+        # 备选基金信息入库
+        fund_list = strategy_pool_info['data']
+        fund_info_list = []
+        if fund_list is None:
+            log.warning(brand_info['TGNAME'] + '备选基金信息缺失')
+        else:
+            for fund in fund_list:
+                fund_info_values = (
+                    strategy_id,
+                    brand_info['TGNAME'],
+                    fund['FCODE'],
+                    fund['FNAME'],
+                    fund['FTYPENAME'],
+                    update_date
+                )
+                fund_info_list.append(fund_info_values)
+            connection.cursor().executemany(
+                "INSERT INTO `strategy_pool`(strategy_id,strategy_name,fund_code,fund_name,fund_type,update_date) value(%s,%s,%s,%s,%s,%s)",
+                fund_info_list)
+            connection.commit()
+            log.info('\t' + brand_info['TGNAME'] + '备选基金信息入库成功')
+
+        # 日收益信息入库
+        day_profit_list = []
+        total_performance = detail_info['strategyProfitChart_ln'].get('data', {})
+
+        for profit in total_performance:
+            date = datetime.datetime.strptime(profit['PDATE'], '%Y-%m-%d').date()
+            day_profit_list.append((
+                strategy_id,
+                brand_info['TGNAME'],
+                date,
+                float(profit['SE']) / 100,
+                float(profit['BENCH_SE']) / 100,
+                update_date
+            ))
+        connection.cursor().executemany(
+            "INSERT INTO `day_profit`(strategy_id,strategy_name,date_,SE,BENCH_SE,update_date) value (%s,%s,%s,%s,%s,%s)",
+            day_profit_list)
+        connection.commit()
+        log.info('\t' + brand_info['TGNAME'] + '日收益信息入库成功\n')
+    except Exception as e:
+        log.error(traceback.format_exc())
+        log.error("投顾策略ID:" + strategy_id)
+        log.error("投顾品牌:" + brand_info['TGNAME'])
+        log.warning(detail_info)
+        log.warning(brand_info)
+        log.warning(extend_info)
+        log.warning(strategy_pool_info)
 
 
 # 记录入库
@@ -442,26 +451,9 @@ def save_to_db():
 
 
 if __name__ == '__main__':
-    # 接收命令行的数据库信息
-    host = '#'
-    port = '#'
-    user = '#'
-    password = '#'
-    if len(sys.argv) != 5:
-        log.error("数据库配置信息缺失！")
-        log.info("输入'#'使用默认数据库配置信息，输入其他退出程序:")
-        select = input()
-        if select != '#':
-            exit(-1)
-    else:
-        host = sys.argv[1]
-        port = sys.argv[2]
-        user = sys.argv[3]
-        password = sys.argv[4]
-
     start = time.time()
     # 获取数据库连接
-    connection = get_db_connection(host, port, user, password)
+    connection = get_db_connection()
     cursor = connection.cursor()
 
     # 初始化数据库
