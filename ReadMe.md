@@ -92,11 +92,11 @@ CREATE TABLE `base_info` (
   `min_buy` float DEFAULT NULL COMMENT '起投金额，单位元',
   `service_rate` float DEFAULT NULL COMMENT '服务费率',
   `strategy_rate_discount` float DEFAULT NULL COMMENT '产品申购费率折扣',
-  `update_date` date NOT NULL COMMENT '日期',
+  `update_date` date NOT NULL COMMENT '入库日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`id`),
   KEY `index_udate_id` (`update_date`,`strategy_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 # 区间收益表
@@ -123,11 +123,11 @@ CREATE TABLE `interval_profit` (
   `curyear_bench` float DEFAULT NULL COMMENT '今年基准涨跌幅',
   `total_profit` float DEFAULT NULL COMMENT '成立以来涨跌幅',
   `total_bench` float DEFAULT NULL COMMENT '成立以来基准涨跌幅',
-  `update_date` date NOT NULL COMMENT '日期',
+  `update_date` date NOT NULL COMMENT '入库日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`id`),
   KEY `index_udate_id` (`update_date`,`strategy_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 # 持仓信息表
 CREATE TABLE `hold_warehouse_info` (
@@ -139,11 +139,11 @@ CREATE TABLE `hold_warehouse_info` (
   `fund_name` varchar(30) DEFAULT NULL COMMENT '基金名称',
   `fund_type` varchar(10) DEFAULT NULL COMMENT '基金类型',
   `ratio` float DEFAULT NULL COMMENT '持仓比例',
-  `update_date` date NOT NULL COMMENT '日期',
+  `update_date` date NOT NULL COMMENT '入库日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`id`),
   KEY `index_udate_id_fcode` (`update_date`,`strategy_id`,`fund_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 # 调仓历史记录表
@@ -153,11 +153,11 @@ CREATE TABLE `adjust_warehouse_history` (
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
   `date_` date DEFAULT NULL COMMENT '调仓日期',
   `reason` varchar(1000) DEFAULT NULL COMMENT '调仓原因',
-  `update_date` date NOT NULL COMMENT '日期',
+  `update_date` date NOT NULL COMMENT '入库日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`id`),
   KEY `index_udate_id_date` (`update_date`,`strategy_id`,`date_`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 # 调仓明细变动表
@@ -171,11 +171,11 @@ CREATE TABLE `adjust_warehouse_detail` (
   `fund_type` varchar(10) DEFAULT NULL COMMENT '基金类型',
   `pre_ratio` float DEFAULT NULL COMMENT '调仓前持仓占比',
   `after_ratio` float DEFAULT NULL COMMENT '调仓后持仓占比',
-  `update_date` date NOT NULL COMMENT '日期',
+  `update_date` date NOT NULL COMMENT '入库日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`id`),
   KEY `index_udate_id_date_fcode` (`update_date`,`strategy_id`,`date_`,`fund_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 # 备选基金表
@@ -186,11 +186,11 @@ CREATE TABLE `strategy_pool` (
   `fund_code` varchar(10) DEFAULT NULL COMMENT '基金代码',
   `fund_name` varchar(30) DEFAULT NULL COMMENT '基金名称',
   `fund_type` varchar(10) DEFAULT NULL COMMENT '基金类型',
-  `update_date` date NOT NULL COMMENT '日期',
+  `update_date` date NOT NULL COMMENT '入库日期',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`id`),
   KEY `index_udate_id_fcode` (`update_date`,`strategy_id`,`fund_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 # 日收益率表
@@ -198,12 +198,12 @@ CREATE TABLE `day_profit` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
   `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
-  `date_` date DEFAULT NULL COMMENT '日期',
+  `date_` date DEFAULT NULL COMMENT '入库日期',
   `SE` float DEFAULT NULL COMMENT '组合涨跌幅',
   `BENCH_SE` float DEFAULT NULL COMMENT '基准涨跌幅',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`id`),
   KEY `index_udate_id_date` (`update_date`,`strategy_id`,`date_`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
