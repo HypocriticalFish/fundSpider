@@ -129,7 +129,8 @@ CREATE TABLE `interval_profit` (
   KEY `index_udate_id` (`update_date`,`strategy_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-# 持仓信息表
+
+# 持仓详情分布信息表
 CREATE TABLE `hold_warehouse_info` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
@@ -143,6 +144,21 @@ CREATE TABLE `hold_warehouse_info` (
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
   PRIMARY KEY (`id`),
   KEY `index_udate_id_fcode` (`update_date`,`strategy_id`,`fund_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+# 持仓类型分布信息表
+CREATE TABLE `hold_warehouse_type` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `strategy_id` varchar(10) DEFAULT NULL COMMENT '投顾策略ID',
+  `strategy_name` varchar(20) DEFAULT NULL COMMENT '投顾策略名称',
+  `date_` date DEFAULT NULL COMMENT '日期',
+  `fund_type` varchar(10) DEFAULT NULL COMMENT '基金类型',
+  `ratio` float DEFAULT NULL COMMENT '持仓比例',
+  `update_date` date NOT NULL COMMENT '入库日期',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间戳',
+  PRIMARY KEY (`id`),
+  KEY `index_udate_id_fcode` (`update_date`,`strategy_id`,`fund_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
