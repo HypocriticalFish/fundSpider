@@ -179,9 +179,14 @@ def init_db():
         "CREATE TABLE IF NOT EXISTS interval_profit(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),last_date DATE,week_profit FLOAT,week_bench FLOAT,month_profit FLOAT,month_bench FLOAT,thrmonth_profit FLOAT,thrmonth_bench FLOAT,halfyear_profit FLOAT,halfyear_bench FLOAT,year_profit FLOAT,year_bench FLOAT,twoyear_pforit FLOAT,twoyear_bench FLOAT,thryear_profit FLOAT,thryear_bench FLOAT,curyear_profit FLOAT,curyear_bench FLOAT,total_profit FLOAT,total_bench FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id`(`update_date`,`strategy_id`))"
     )
 
-    # 创建持仓分布表
+    # 创建持仓详情分布表
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS hold_warehouse_info(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_code VARCHAR(10),fund_name VARCHAR(30),fund_type VARCHAR(10),ratio FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id_fcode`(`update_date`,`strategy_id`,`fund_code`))"
+    )
+
+    # 创建持仓类型分布表
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS hold_warehouse_type(id INT AUTO_INCREMENT PRIMARY KEY,strategy_id VARCHAR(10),strategy_name VARCHAR(20),date_ DATE,fund_type VARCHAR(10),ratio FLOAT,update_date DATE,update_time DATETIME DEFAULT NOW(),KEY `index_udate_id_fcode`(`update_date`,`strategy_id`,`fund_type`))"
     )
 
     # 创建调仓记录表
@@ -314,36 +319,50 @@ def get_all_info(strategy_id, base_item):
         interval_profit_list.append(interval_profit_values)
         log.info('\t' + brand_info['TGNAME'] + '区间收益信息爬取成功')
 
-        # 持仓信息
-        hold_warehouse_info = detail_info['getHoldWarehouseInfo'].get('data', {})
         # 持仓基金类型列表
         fund_type_map = ("QDII", "股票型", "货币型", "混合型", "", "", "债券型", "", "指数型")
-        hold_type_list = hold_warehouse_info.get('holdTypeList', [])
 
+        # 持仓信息
+        hold_warehouse_info = detail_info['getHoldWarehouseInfo']['data']
+        is_details_show = hold_warehouse_info['isDetailsWhiteShow'] == 1
+        hold_type_list = hold_warehouse_info['holdTypeList']
         # 收集持仓信息
-        if hold_type_list is None or len(hold_type_list) == 0:
-            log.warning(brand_info['TGNAME'] + '无持仓分布详细信息')
+        date = datetime.datetime.strptime(hold_warehouse_info.get('date'), '%Y-%m-%d').date()
+        for holdType in hold_type_list:
+            # 计算类型
+            t = holdType['type']
+            if t == 'a':
+                t = '0'
+            fund_type = fund_type_map[int(t)]
+            hold_warehouse_type_values = (
+                strategy_id,
+                brand_info['TGNAME'],
+                date,
+                fund_type,
+                float(holdType['totalRatio']) / 100,
+                update_date
+            )
+            hold_warehouse_type_list.append(hold_warehouse_type_values)
+            for fund in holdType['fundsList']:
+                ratio = fund.get('ratio', None)
+                if ratio is not None:
+                    ratio = float(ratio) / 100
+                hold_warehouse_values = (
+                    strategy_id,
+                    brand_info['TGNAME'],
+                    date,
+                    fund.get("fundCode", None),
+                    fund.get("fundName", None),
+                    fund_type,
+                    ratio,
+                    update_date
+                )
+                hold_warehouse_list.append(hold_warehouse_values)
+        log.info('\t' + brand_info['TGNAME'] + '持仓类型分布信息爬取成功')
+        if is_details_show:
+            log.info('\t' + brand_info['TGNAME'] + '持仓详情分布信息爬取成功')
         else:
-            date = datetime.datetime.strptime(hold_warehouse_info.get('date'), '%Y-%m-%d').date()
-            for holdType in hold_type_list:
-                for fund in holdType['fundsList']:
-                    # 计算类型
-                    t = fund['type']
-                    if t == 'a':
-                        t = '0'
-                    fund_type = fund_type_map[int(t)]
-                    hold_warehouse_values = (
-                        strategy_id,
-                        brand_info['TGNAME'],
-                        date,
-                        fund.get("fundCode", None),
-                        fund.get("fundName", None),
-                        fund_type,
-                        float(fund['ratio']) / 100,
-                        update_date
-                    )
-                    hold_warehouse_list.append(hold_warehouse_values)
-            log.info('\t' + brand_info['TGNAME'] + '持仓分布信息爬取成功')
+            log.warning(brand_info['TGNAME'] + '持仓占比信息缺失')
 
         # 收集调仓历史及详细信息
         adjust_history_list = detail_info['getAdjustWarehouse_1']['data']['adjustHistory']
@@ -423,10 +442,8 @@ def get_all_info(strategy_id, base_item):
         log.error(traceback.format_exc())
         log.error("投顾策略ID:" + strategy_id)
         log.error("投顾品牌:" + brand_info['TGNAME'])
+        log.error('【投顾策略完整信息如下：】')
         log.warning(detail_info)
-        log.warning(brand_info)
-        log.warning(extend_info)
-        log.warning(strategy_pool_info)
 
 
 # 记录入库
@@ -440,6 +457,9 @@ def save_to_db():
     cursor.executemany(
         "INSERT INTO `hold_warehouse_info`(strategy_id,strategy_name,date_,fund_code,fund_name,fund_type,ratio,update_date) value (%s,%s,%s,%s,%s,%s,%s,%s)",
         hold_warehouse_list)
+    cursor.executemany(
+        "INSERT INTO `hold_warehouse_type`(strategy_id,strategy_name,date_,fund_type,ratio,update_date) value (%s,%s,%s,%s,%s,%s)",
+        hold_warehouse_type_list)
     cursor.executemany(
         "INSERT INTO `adjust_warehouse_history`(strategy_id,strategy_name,date_,reason,update_date) value (%s,%s,%s,%s,%s)",
         adjust_warehouse_list)
@@ -475,6 +495,8 @@ if __name__ == '__main__':
     interval_profit_list = list()
     # 持仓分布信息的列表
     hold_warehouse_list = list()
+    # 持仓分布信息的列表
+    hold_warehouse_type_list = list()
     # 调仓历史记录的列表
     adjust_warehouse_list = list()
     # 调仓详情的列表
